@@ -5,13 +5,14 @@ import "../assets/css/style.scss";
 const app = document.getElementById("app");
 app.innerHTML = `
   <h1>Drag And Drop API</h1>
-  <p>Accepts only .png .jpg .svg</p>
   <div class="uploader"> 
-   <!-- <div id=" item-0"class="dragme" draggable="true"></div> !-->
-   <h2>Upload your files here</h2>
+    <!-- <div id=" item-0"class="dragme" draggable="true"></div> !-->
+    <h2>Upload your files here</h2>
+    <p>Accepts only .png .jpg .svg</p>
+    <input type="file" class="files" accept="image/*" multiple>
     <div  class="dropzone">🗂️ Drag to Upload</div>
+    <div class="list"> </div>
   </div>
-  <div class="list"> </div>
   <style>
     .uploader {
       box-sizing: border-box;
@@ -47,6 +48,7 @@ const init = () => {
   // const dragMe = document.querySelector(".dragme");
   const dropZone = document.querySelector(".dropzone");
   const list = document.querySelector(".list");
+  const files = document.querySelector(".files");
 
   // dragMe.addEventListener('dragstart', (e) => {
   //   e.dataTransfer.setData('text/plain', e.target.id);
@@ -82,16 +84,39 @@ const init = () => {
     handleFileUpload(files);
   });
   //code -> https://glitch.com/edit/#!/drag-and-drop-api
+
+  // const uploadFiles = async (files) => {
+  //   const form = new FormData();
+  //   [...files].forEach((file) => form.append(file.name, file));
+
+  //   const request = new Request("https://drag-and-drop-api.glitch.me/upload", {
+  //     method: "POST",
+  //     body: form,
+  //   });
+  //   return await request.json();
+  // };
+
   const uploadFiles = async (files) => {
     const form = new FormData();
     [...files].forEach((file) => form.append(file.name, file));
 
-    const request = new Request("https://drag-and-drop-api.glitch.me", {
+    const request = new Request("https://drag-and-drop-api.glitch.me/upload", {
       method: "POST",
       body: form,
     });
-    return await request.json();
+    const response = await fetch(request);
+    const responseData = await response.text();
+
+    console.log(responseData);
+
+    return JSON.parse(responseData);
   };
+
+  files.addEventListener("change", (e) => {
+    const { files } = e.target;
+    handleFileUpload(files);
+  });
+
   const showFilePreview = (file) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -105,7 +130,6 @@ const init = () => {
     </div>
     `;
       list.appendChild(div);
-      // console.log(list)
     });
   };
 

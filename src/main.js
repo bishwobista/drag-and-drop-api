@@ -5,10 +5,13 @@ import "../assets/css/style.scss";
 const app = document.getElementById("app");
 app.innerHTML = `
   <h1>Drag And Drop API</h1>
+  <p>Accepts only .png .jpg .svg</p>
   <div class="uploader"> 
-    <div id=" item-0"class="dragme" draggable="true"></div>
-    <div  class="dropzone"> 🎯Drag Here!</div>
+   <!-- <div id=" item-0"class="dragme" draggable="true"></div> !-->
+   <h2>Upload your files here</h2>
+    <div  class="dropzone">🗂️ Drag to Upload</div>
   </div>
+  <div class="list"> </div>
   <style>
     .uploader {
       box-sizing: border-box;
@@ -41,33 +44,89 @@ app.innerHTML = `
 
 //only runs when drag and drop is supported
 const init = () => {
-  const dragMe = document.querySelector(".dragme");
+  // const dragMe = document.querySelector(".dragme");
   const dropZone = document.querySelector(".dropzone");
-  dragMe.addEventListener('dragstart', (e) => {
-    e.dataTransfer.setData('text/plain', e.target.id);
-    e.dataTransfer.effectAllowed = 'copy';
-    e.target.classList.add('active');
-  });
-  dropZone.addEventListener('dragenter', (e) => e.target.classList.add('active'));
-  dropZone.addEventListener('dragleave', (e) => e.target.classList.remove('active'));
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'copy';
+  const list = document.querySelector(".list");
 
-  });
-  dropZone.addEventListener('drop', (e) => {
+  // dragMe.addEventListener('dragstart', (e) => {
+  //   e.dataTransfer.setData('text/plain', e.target.id);
+  //   e.dataTransfer.effectAllowed = 'copy';
+  //   e.target.classList.add('active');
+  // });
+  dropZone.addEventListener("dragenter", (e) =>
+    e.target.classList.add("active")
+  );
+  dropZone.addEventListener("dragleave", (e) =>
+    e.target.classList.remove("active")
+  );
+  dropZone.addEventListener("dragover", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    e.target.classList.remove('active');
-    const id = e.dataTransfer.getData('text/plain');
-    const element = document.getElementById(id);
-    dropZone.appendChild(element);
-    
-    element.addEventListener('click', () => {
-      element.remove();
+    e.dataTransfer.dropEffect = "copy";
+  });
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.target.classList.remove("active");
+    // const id = e.dataTransfer.getData('text/plain');
+    // const element = document.getElementById(id);
+
+    // if (element instanceof Node) {
+    //   dropZone.appendChild(element);
+
+    //   element.addEventListener('click', () => {
+    //     element.remove();
+    //   });
+    // }
+    const { files } = e.dataTransfer;
+    handleFileUpload(files);
+  });
+  //code -> https://glitch.com/edit/#!/drag-and-drop-api
+  const uploadFiles = async (files) => {
+    const form = new FormData();
+    [...files].forEach((file) => form.append(file.name, file));
+
+    const request = new Request("https://drag-and-drop-api.glitch.me", {
+      method: "POST",
+      body: form,
+    });
+    return await request.json();
+  };
+  const showFilePreview = (file) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.addEventListener("load", (e) => {
+      const div = document.createElement("div");
+      div.innerHTML = ` 
+    <div style = "display: flex; width: 100%; height: 100%">
+      <img src="${e.target.result}" alt="${file.name}" style = " width: 20px; height: auto"/>
+      <p>${file.name} <span>${file.size} bytes</span> </p>
+
+    </div>
+    `;
+      list.appendChild(div);
+      // console.log(list)
+    });
+  };
+
+  const isAllowedType = (file) => {
+    return ["image/png", "image/jpeg", "image/svg+xml"].includes(file.type);
+  };
+  const handleFileUpload = async (files) => {
+    const filesToUpload = [...files].filter(isAllowedType);
+    filesToUpload.forEach(showFilePreview);
+    const uploaded = await uploadFiles(filesToUpload);
+    if (uploaded) {
+      for (const image of uploaded.images) {
+        console.log(image);
+      }
     }
-    );
+  };
+  document.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+  document.addEventListener("drop", (e) => {
+    e.preventDefault();
   });
 };
 
